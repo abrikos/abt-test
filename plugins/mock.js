@@ -34,10 +34,9 @@ export default function ({app}, inject) {
 
     const ret = stored.length ? stored : mock;
     for (const item of ret) {
-      item.diffReturned = moment(item.activity).diff(moment(item.registration), 'days');
-      item.diffNewbie = moment().diff(moment(item.registration), 'days');
+      item.lifeDays = moment(item.activity).diff(moment(item.registration), 'days');
+      item.registeredDays = moment().diff(moment(item.registration), 'days');
     }
-    console.log(ret);
     return ret;
   })
 }

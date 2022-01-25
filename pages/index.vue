@@ -1,10 +1,8 @@
 <template>
   <div class="container">
     <b-button variant="primary" @click="clearDates" v-b-modal.modal-add-user>Add user</b-button>
-    <b-button variant="primary" @click="save">Save</b-button>
-    <b-button variant="success" @click="retentionCalculate">Calculate</b-button>
-    <b-button variant="secondary" @click="reset">Reset data</b-button>
-    <b-alert :show="!!retention">{{ retention }}</b-alert>
+    <b-alert :show="!!retention">Rolling Retention {{days}} day: <strong>{{ retention }}</strong></b-alert>
+    <Chart />
     <table>
       <tr>
         <th>UserId</th>
@@ -15,26 +13,34 @@
         <td>{{ item.id }}</td>
         <td>{{ item.registration }}</td>
         <td>{{ item.activity }}</td>
-        <td>{{ item.diffReturned }}</td>
-        <td>{{ item.diffNewbie }}</td>
+        <td>{{ item.lifeDays }}</td>
+        <td>{{ item.registeredDays }}</td>
         <td>
           <b-button variant="danger" size="sm" @click="deleteUser(item)">Delete</b-button>
         </td>
       </tr>
     </table>
+    <b-button variant="secondary" @click="reset">Reset data</b-button>
     <b-modal id="modal-add-user" title="Add user" @ok="add">
-      <strong>Registration date</strong>
-      <b-calendar v-model="registration" locale="en-US" block></b-calendar>
-      <strong>Last activity date</strong>
-      <b-calendar v-model="activity" locale="en-US" block></b-calendar>
+      <b-row>
+        <b-col>
+          <strong>Registration date</strong>
+          <b-calendar v-model="registration" locale="en-US" block></b-calendar>
+        </b-col>
+        <b-col>
+          <strong>Last activity date</strong>
+          <b-calendar v-model="activity" locale="en-US" block></b-calendar>
+        </b-col>
+      </b-row>
     </b-modal>
   </div>
 </template>
 
 <script>
-
+import Chart from '../components/Chart';
 export default {
   name: 'IndexPage',
+  components: {Chart},
   data() {
     return {
       days: 7,
@@ -44,7 +50,7 @@ export default {
       retention: ''
     }
   },
-  created() {
+  mounted() {
     this.items = this.$loadDb();
     this.retentionCalculate();
   },
@@ -53,36 +59,55 @@ export default {
       this.activity = '';
       this.registration = '';
     },
-    add() {
+    add(e) {
+      e.preventDefault();
       this.retention = '';
       const {registration, activity} = this;
+      if(!(registration && activity)) return this.$bvModal.msgBoxOk('Please select both dates', {
+        title: 'Error',
+        size: 'sm',
+        buttonSize: 'sm',
+        okVariant: 'danger',
+        headerClass: 'p-2 border-bottom-0',
+        footerClass: 'p-2 border-top-0',
+        centered: true
+      })
       this.items.push({registration, activity})
       this.save();
+      this.retentionCalculate()
+      this.$nextTick(() => {
+        this.$bvModal.hide('modal-add-user')
+      })
     },
     reset() {
       this.$saveDb([]);
       this.items = this.$loadDb();
+      this.retentionCalculate()
     },
     save() {
       this.$saveDb(this.items);
       this.items = this.$loadDb();
+      console.log(this.items)
+      this.retentionCalculate()
     },
     deleteUser(item) {
       this.items = this.items.filter(i => item.id !== i.id);
       this.$saveDb(this.items);
+      this.retentionCalculate()
     },
     retentionCalculate() {
       let returned = 0;
       let newbies = 0;
       for (const item of this.items) {
-        if (item.diffReturned <= this.days) returned++;
-        if (item.diffNewbie <= this.days) newbies++;
+        if (item.lifeDays <= this.days) returned++;
+        if (item.registeredDays >= this.days) newbies++;
         // console.log(JSON.stringify(item), returned, newbies)
       }
-
-      this.retention = newbies ? (returned / newbies * 100).toFixed(2) : `No new registered users in ${this.days} days`;
+      this.$nuxt.$emit("calculated", this.items);
+      this.retention = newbies ? (returned / newbies * 100).toFixed(2) : `No registered users older than ${this.days} days`;
     }
-  }
+  },
+
 }
 </script>
 
@@ -109,8 +134,8 @@ table
     border: none
 
   th
-    padding: 10px
+    padding: 5px
 
   td
-    padding: 10px
+    padding: 5px
 </style>
