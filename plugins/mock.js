@@ -33,8 +33,7 @@ export default function ({app}, inject) {
     } catch (e) {
       console.warn(e)
     }
-
-    const ret = stored.length ? stored : mock;
+    const ret = stored && stored.length ? stored : mock;
     for (const item of ret) {
       item.lifeDays = moment(item.activity).diff(moment(item.registration), 'days');
       item.registeredDays = moment().diff(moment(item.registration), 'days');
