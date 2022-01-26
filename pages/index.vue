@@ -65,6 +65,7 @@ export default {
       this.activity = '';
       this.registration = '';
     },
+
     add(e) {
       e.preventDefault();
       this.retention = '';
@@ -85,29 +86,31 @@ export default {
         this.$bvModal.hide('modal-add-user')
       })
     },
+
     reset() {
       this.$saveDb([]);
       this.items = this.$loadDb();
       this.retentionCalculate()
     },
+
     save() {
       this.$saveDb(this.items);
       this.items = this.$loadDb();
-      console.log(this.items)
       this.retentionCalculate()
     },
+
     deleteUser(item) {
       this.items = this.items.filter(i => item.id !== i.id);
       this.$saveDb(this.items);
       this.retentionCalculate()
     },
+
     retentionCalculate() {
       let returned = 0;
       let newbies = 0;
       for (const item of this.items) {
         if (item.lifeDays <= this.days) returned++;
         if (item.registeredDays >= this.days) newbies++;
-        // console.log(JSON.stringify(item), returned, newbies)
       }
       this.$nuxt.$emit("calculated", this.items);
       this.retention = newbies ? (returned / newbies * 100).toFixed(2) : `No registered users older than ${this.days} days`;

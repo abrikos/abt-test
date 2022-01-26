@@ -74,6 +74,7 @@ export default {
           // enabledOnSeries: [0]
         },
         labels: [],
+        // TODO add axis for percent
         yaxis: {
           labels: {
             formatter: v => v % 1 === 0 ? v : v.toFixed(2),
@@ -128,15 +129,17 @@ export default {
         for (const days of Object.keys(gist)) {
           ser.data.push(percentile[gist[days]])
         }
-        console.log(ser.data)
         this.series.push(ser);
       }else{
         this.series = this.series.filter(s => s.name !== 'Percent')
       }
     },
+
     setLog() {
+      // TODO Why does this have no effect?
       this.chartOptions.yaxis.logarithmic = this.logarithmic;
     },
+
     drawData(data) {
       const options = {...this.chartOptions};
       this.items = data;
@@ -150,11 +153,11 @@ export default {
         labels.push(days);
         ser.data.push(this.gist[days]);
       }
-      console.log(labels, ser.data)
       options.labels = labels;
       this.chartOptions = options;
       this.series = [ser]
     },
+
     switchAverage() {
       if (!this.series.find(s => s.name === 'Average')) {
         const ser = {
@@ -169,11 +172,11 @@ export default {
         const average = sum / Object.keys(this.gist).length;
         for (const d in this.gist) ser.data.push(average);
         this.series.push(ser)
-        console.log(this.data.datasets)
       } else {
         this.series = this.series.filter(s => s.name !== 'Average')
       }
     },
+
     switchMedian() {
       if (!this.series.find(s => s.name === 'Median')) {
         const ser = {

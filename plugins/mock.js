@@ -6,9 +6,9 @@ export default function ({app}, inject) {
   inject('saveDb', data => {
     let maxId = getMaxId(data);
     console.log('Save data', maxId);
-    for(const item of data){
-      if(!item.id) {
-        maxId ++;
+    for (const item of data) {
+      if (!item.id) {
+        maxId++;
         item.id = maxId;
       }
     }
