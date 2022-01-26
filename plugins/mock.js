@@ -24,6 +24,8 @@ export default function ({app}, inject) {
       {id: 4, registration: '2021-11-14', activity: '2021-12-12'},
       {id: 5, registration: '2021-11-14', activity: '2021-11-15'},
       {id: 6, registration: '2021-11-18', activity: '2021-12-12'},
+      {id: 7, registration: '2021-11-18', activity: '2021-12-12'},
+      {id: 8, registration: '2021-11-18', activity: '2021-12-12'},
     ]
     let stored = []
     try {

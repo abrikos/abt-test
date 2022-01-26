@@ -1,8 +1,13 @@
 <template>
   <div class="container">
-    <b-button variant="primary" @click="clearDates" v-b-modal.modal-add-user>Add user</b-button>
-    <b-alert :show="!!retention">Rolling Retention {{days}} day: <strong>{{ retention }}</strong></b-alert>
-    <Chart />
+    <h1>User activity calculation</h1>
+    <Chart/>
+    <div class="d-flex justify-content-between  align-items-center">
+      <div>
+        <b-button variant="primary" @click="clearDates" v-b-modal.modal-add-user>Add user</b-button>
+      </div>
+      <b-alert :show="!!retention">Rolling Retention {{ days }} days: <strong>{{ retention }}</strong></b-alert>
+    </div>
     <table>
       <tr>
         <th>UserId</th>
@@ -38,6 +43,7 @@
 
 <script>
 import Chart from '../components/Chart';
+
 export default {
   name: 'IndexPage',
   components: {Chart},
@@ -63,7 +69,7 @@ export default {
       e.preventDefault();
       this.retention = '';
       const {registration, activity} = this;
-      if(!(registration && activity)) return this.$bvModal.msgBoxOk('Please select both dates', {
+      if (!(registration && activity)) return this.$bvModal.msgBoxOk('Please select both dates', {
         title: 'Error',
         size: 'sm',
         buttonSize: 'sm',

@@ -5,31 +5,39 @@
     <!--    <bar-chart :data="chartData" :height="200" :options="options" key="Math.random()"/>-->
     <div class="options d-flex justify-content-around">
 
-        <div v-if="false">
-          <b-form-checkbox
-            id="checkbox-1"
-            v-model="logarithmic"
-            @change="setLog"
-          >
-            Logarithmic
-          </b-form-checkbox>
-        </div>
-        <div>
-          <b-form-checkbox
-            id="checkbox-2"
-            @change="switchAverage"
-          >
-            Average
-          </b-form-checkbox>
-        </div>
-        <div>
-          <b-form-checkbox
-            id="checkbox-3"
-            @change="switchMedian"
-          >
-            Median
-          </b-form-checkbox>
-        </div>
+      <div>
+        <b-form-checkbox v-if="false"
+          id="checkbox-1"
+          v-model="logarithmic"
+          @change="setLog"
+        >
+          Logarithmic
+        </b-form-checkbox>
+      </div>
+      <div>
+        <b-form-checkbox
+          id="checkbox-2"
+          @change="switchAverage"
+        >
+          Average
+        </b-form-checkbox>
+      </div>
+      <div>
+        <b-form-checkbox
+          id="checkbox-3"
+          @change="switchMedian"
+        >
+          Median
+        </b-form-checkbox>
+      </div>
+      <div>
+        <b-form-checkbox
+          id="checkbox-4"
+          @change="switchPercentile"
+        >
+          Percents
+        </b-form-checkbox>
+      </div>
 
     </div>
   </div>
@@ -45,14 +53,14 @@ export default {
   data() {
     return {
       data: {labels: [], datasets: []},
-      items: [],
-      showAverage: false,
       logarithmic: false,
+      items: [],
       series: [],
       chartOptions: {
         chart: {
           height: 350,
           type: 'line',
+          stacked: false
         },
         stroke: {
           width: [0, 4]
@@ -62,34 +70,22 @@ export default {
         },
         dataLabels: {
           enabled: true,
-          enabledOnSeries: [0]
+          formatter: v => v % 1 === 0 ? v : v.toFixed(2),
+          // enabledOnSeries: [0]
         },
         labels: [],
         yaxis: {
           labels: {
-            formatter: v => v.toFixed(2),
+            formatter: v => v % 1 === 0 ? v : v.toFixed(2),
           },
-          logarithmic: true,
+          logarithmic: false,
           min: 0,
           title: {
             text: 'Users',
           },
 
         }
-      },
-      options: {
-        scales: {
-          yAxes: [
-            {
-              type: 'linear',
-              ticks: {
-                beginAtZero: true
-              }
-            }
-          ]
-
-        }
-      },
+      }
     }
   },
   computed: {
@@ -103,16 +99,46 @@ export default {
         }
       }
       return gist;
-    }
+    },
   },
   created() {
-    this.$nuxt.$on('calculated', this.adaptData);
+    this.$nuxt.$on('calculated', this.drawData);
   },
   methods: {
+    switchPercentile() {
+      if (!this.series.find(s => s.name === 'Percent')) {
+        const ser = {
+          name: 'Percent',
+          type: 'line',
+          data: []
+        }
+        const {gist} = this;
+        const values = Object.values(gist);
+        const percentile = {};
+        for (const v of values) {
+          if (!percentile[v]) {
+            percentile[v] = 1;
+          } else {
+            percentile[v]++;
+          }
+        }
+        for (const v of Object.keys(percentile)) {
+          percentile[v] = percentile[v] / values.length * 100;
+        }
+        for (const days of Object.keys(gist)) {
+          ser.data.push(percentile[gist[days]])
+        }
+        console.log(ser.data)
+        this.series.push(ser);
+      }else{
+        this.series = this.series.filter(s => s.name !== 'Percent')
+      }
+    },
     setLog() {
       this.chartOptions.yaxis.logarithmic = this.logarithmic;
     },
-    adaptData(data) {
+    drawData(data) {
+      const options = {...this.chartOptions};
       this.items = data;
       const ser = {
         name: 'Users per day',
@@ -124,11 +150,12 @@ export default {
         labels.push(days);
         ser.data.push(this.gist[days]);
       }
-      this.chartOptions.labels = labels;
+      console.log(labels, ser.data)
+      options.labels = labels;
+      this.chartOptions = options;
       this.series = [ser]
     },
     switchAverage() {
-      console.log(this.series.find(s => s.name !== 'Average'))
       if (!this.series.find(s => s.name === 'Average')) {
         const ser = {
           name: 'Average',
@@ -155,8 +182,8 @@ export default {
           data: []
         }
         const values = Object.values(this.gist);
-        values.sort(function(a,b){
-          return a-b;
+        values.sort(function (a, b) {
+          return a - b;
         });
         const half = Math.floor(values.length / 2);
         let median = (values[half - 1] + values[half]) / 2.0;
@@ -175,6 +202,7 @@ export default {
 <style scoped lang="sass">
 .chart-container
   border: 1px solid silver
+
   .options
     padding: 10px
 </style>
