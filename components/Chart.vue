@@ -7,9 +7,9 @@
 
       <div>
         <b-form-checkbox v-if="false"
-          id="checkbox-1"
-          v-model="logarithmic"
-          @change="setLog"
+                         id="checkbox-1"
+                         v-model="logarithmic"
+                         @change="setLogarithmic"
         >
           Logarithmic
         </b-form-checkbox>
@@ -17,7 +17,7 @@
       <div>
         <b-form-checkbox
           id="checkbox-2"
-          @change="switchAverage"
+          @change="switchSeries('Average')"
         >
           Average
         </b-form-checkbox>
@@ -25,7 +25,7 @@
       <div>
         <b-form-checkbox
           id="checkbox-3"
-          @change="switchMedian"
+          @change="switchSeries('Median')"
         >
           Median
         </b-form-checkbox>
@@ -33,7 +33,7 @@
       <div>
         <b-form-checkbox
           id="checkbox-4"
-          @change="switchPercentile"
+          @change="switchSeries('Percent')"
         >
           Percents
         </b-form-checkbox>
@@ -106,36 +106,78 @@ export default {
     this.$nuxt.$on('calculated', this.drawData);
   },
   methods: {
-    switchPercentile() {
-      if (!this.series.find(s => s.name === 'Percent')) {
-        const ser = {
-          name: 'Percent',
+    switchSeries(name) {
+      if (!this.series.find(s => s.name === name)) {
+        const series = {
+          name,
           type: 'line',
-          data: []
         }
         const {gist} = this;
-        const values = Object.values(gist);
-        const percentile = {};
-        for (const v of values) {
-          if (!percentile[v]) {
-            percentile[v] = 1;
-          } else {
-            percentile[v]++;
-          }
+        switch (name){
+          case 'Percent':
+            series.data = this.calcPercent(gist);
+            break;
+          case 'Average':
+            series.data = this.calcAverage(gist);
+            break;
+          case 'Median':
+            series.data = this.calcMedian(gist);
+            break;
         }
-        for (const v of Object.keys(percentile)) {
-          percentile[v] = percentile[v] / values.length * 100;
-        }
-        for (const days of Object.keys(gist)) {
-          ser.data.push(percentile[gist[days]])
-        }
-        this.series.push(ser);
-      }else{
-        this.series = this.series.filter(s => s.name !== 'Percent')
+        this.series.push(series)
+      } else {
+        this.series = this.series.filter(s => s.name !== name)
       }
+
     },
 
-    setLog() {
+    calcPercent(data){
+      const values = Object.values(data);
+      const percentile = {};
+      for (const v of values) {
+        if (!percentile[v]) {
+          percentile[v] = 1;
+        } else {
+          percentile[v]++;
+        }
+      }
+      for (const v of Object.keys(percentile)) {
+        percentile[v] = percentile[v] / values.length * 100;
+      }
+      const ret = [];
+      for (const days of Object.keys(data)) {
+        ret.push(percentile[data[days]])
+      }
+      console.log(ret)
+      return ret;
+    },
+
+    calcAverage(data){
+      let sum = 0;
+      for (const days of Object.keys(data)) {
+        sum += data[days];
+      }
+      const average = sum / Object.keys(data).length;
+      const ret = [];
+      for (const d in data) ret.push(average);
+      return ret;
+    },
+
+    calcMedian(data){
+      const values = Object.values(data);
+      values.sort(function (a, b) {
+        return a - b;
+      });
+      const half = Math.floor(values.length / 2);
+      let median = (values[half - 1] + values[half]) / 2;
+      if (values.length % 2)
+        median = values[half];
+      const ret = [];
+      for (const d in data) ret.push(median);
+      return ret;
+    },
+
+    setLogarithmic() {
       // TODO Why does this have no effect?
       this.chartOptions.yaxis.logarithmic = this.logarithmic;
     },
@@ -158,46 +200,6 @@ export default {
       this.series = [ser]
     },
 
-    switchAverage() {
-      if (!this.series.find(s => s.name === 'Average')) {
-        const ser = {
-          name: 'Average',
-          type: 'line',
-          data: []
-        }
-        let sum = 0;
-        for (const days of Object.keys(this.gist)) {
-          sum += this.gist[days];
-        }
-        const average = sum / Object.keys(this.gist).length;
-        for (const d in this.gist) ser.data.push(average);
-        this.series.push(ser)
-      } else {
-        this.series = this.series.filter(s => s.name !== 'Average')
-      }
-    },
-
-    switchMedian() {
-      if (!this.series.find(s => s.name === 'Median')) {
-        const ser = {
-          name: 'Median',
-          type: 'line',
-          data: []
-        }
-        const values = Object.values(this.gist);
-        values.sort(function (a, b) {
-          return a - b;
-        });
-        const half = Math.floor(values.length / 2);
-        let median = (values[half - 1] + values[half]) / 2.0;
-        if (values.length % 2)
-          median = values[half];
-        for (const d in this.gist) ser.data.push(median);
-        this.series.push(ser)
-      } else {
-        this.series = this.series.filter(s => s.name !== 'Median')
-      }
-    }
   }
 }
 </script>
